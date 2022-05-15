@@ -11,12 +11,12 @@ function randomColor() {
     return color;
 }
 
-var points = [];
-var lines = [];
-const fric = .999;
-const surF = .999;
-const grav = 0.5;
-const stiffness = 2;
+var points = []
+var lines = []
+const fric = .999
+const surF = .999
+const grav = 0.5
+const stiffness = 20
 
 var paused = false;
 document.querySelector("button").addEventListener("click", function() {
@@ -128,17 +128,35 @@ function constrainLines() {
   }
 }
 
-var lastChainLink = 0;
 function addChainLink(){
-    let lp = points[points.length-1];
-    addPoint(lp.x,lp.y + SIZE/2,lp.ox,lp.oy);
-    if (points.length >= 3) {
-        llp = points[points.length - 2];
-        llp.fixed = false;
+    let lp = points[points.length - 1]
+
+    var dx = 0
+    var dy = SIZE
+
+    if (points.length > 1) {
+
+        let theta = angle * cos(sqrt(g / (l+SIZE)) * t);
+        let x = sin(theta / 2) * (l + SIZE) + points[0].x;
+        let y = cos(theta / 2) * (l + SIZE) + points[0].y;
+
+        console.log(lp.x, lp.y)
+        console.log(x, y)
+        addPoint(x, y, lp.ox, lp.oy)
+    } else {
+        addPoint(lp.x + dx, lp.y + dy, lp.ox, lp.oy)
     }
-    points[points.length - 1].fixed = true;
-    let c = randomColor();
-    addLine(points[points.length-2],points[points.length-1],c);
+
+    if (points.length >= 3) {
+        points[points.length - 2].fixed = false
+    }
+
+    points[points.length - 1].fixed = true
+
+    let c = randomColor()
+
+    addLine(points[points.length-2], points[points.length-1], c);
+
     l = 0
     lines.forEach(ln => {
         l += Math.hypot(ln.p1.x - ln.p2.x,ln.p1.y-ln.p2.y)
@@ -146,8 +164,8 @@ function addChainLink(){
 }
 
 //NOT VERLET
-const SIZE = 50;
-var lastChainLink = 0;
+const SIZE = 25
+var lastChainLink = 0
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -161,31 +179,31 @@ function setup() {
 }
 
 function draw() {
-    if (!paused) {
-        let theta = angle * cos(sqrt(g/l) * t);
-        background(255);
-        lp = points[points.length-1]
-        console.log("before lp ", lp.x, lp.y, lp.ox, lp.oy)
-        lp.ox = lp.x
-        lp.oy = lp.y
-        lp.x = sin(theta/2) * l + points[0].x;
-        lp.y = cos(theta/2) * l + points[0].y;
-        console.log("after lp ", lp.x, lp.y, lp.ox, lp.oy)
+    if (paused) return
+
+    let theta = angle * cos(sqrt(g/l) * t);
+    background(255);
+    lp = points[points.length-1]
+    //console.log("before lp ", lp.x, lp.y, lp.ox, lp.oy)
+    lp.ox = lp.x
+    lp.oy = lp.y
+    lp.x = sin(theta/2) * l + points[0].x;
+    lp.y = cos(theta/2) * l + points[0].y;
+    //console.log("after lp ", lp.x, lp.y, lp.ox, lp.oy)
         
-        movePoints();
-        drawLines();
-        for (var i = 0; i < stiffness; i++){
-            constrainLines();
-        }
-        t += degToRad(10);
-        console.log("after after lp ", lp.x, lp.y, lp.ox, lp.oy)
+    movePoints();
+    drawLines();
+    for (var i = 0; i < stiffness; i++){
+        constrainLines();
     }
+    t += degToRad(10);
+    //console.log("after after lp ", lp.x, lp.y, lp.ox, lp.oy)
+
 }
 
 function keyPressed() {
     if (key == "z") {
         addChainLink();
         draw()
-        paused = true;
     }
 }
