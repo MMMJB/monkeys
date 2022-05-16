@@ -16,21 +16,19 @@ var lines = []
 const fric = .999
 const surF = .999
 const grav = 0.5
-const stiffness = 20
+const stiffness = 5
 
 var paused = false;
-document.querySelector("button").addEventListener("click", function() {
-    if (paused) paused = false;
-    else paused = true;
-    console.log("yes");
+document.querySelector("button").addEventListener("click", function () {
+    paused = !paused
 })
 
-var angle = degToRad(180);
+var angle = degToRad(75);
 var t = 0;
 var g = 10;
-var l;
+var l = 0
 
-function addPoint(x,y,vx,vy,rad = SIZE/2,fixed = false){
+function addPoint(x, y, vx, vy,rad = SIZE/2, fixed = false){
     points.push({
         x: x,
         y: y,
@@ -135,17 +133,17 @@ function addChainLink(){
     var dy = SIZE
 
     if (points.length > 1) {
-
-        let theta = angle * cos(sqrt(g / (l+SIZE)) * t);
-        let x = sin(theta / 2) * (l + SIZE) + points[0].x;
-        let y = cos(theta / 2) * (l + SIZE) + points[0].y;
-
-        console.log(lp.x, lp.y)
-        console.log(x, y)
-        addPoint(x, y, lp.ox, lp.oy)
-    } else {
-        addPoint(lp.x + dx, lp.y + dy, lp.ox, lp.oy)
+        let lpp = points[points.length - 2]
+        dx = lp.x - lpp.x
+        dy = lp.y - lpp.y
     }
+
+    let nx = lp.x + dx
+    let ny = lp.y + dy
+    let nvx = nx - lp.ox
+    let nvy = ny - lp.oy
+   
+    addPoint(nx, ny, nvx, nvy)
 
     if (points.length >= 3) {
         points[points.length - 2].fixed = false
@@ -157,15 +155,20 @@ function addChainLink(){
 
     addLine(points[points.length-2], points[points.length-1], c);
 
-    l = 0
-    lines.forEach(ln => {
-        l += Math.hypot(ln.p1.x - ln.p2.x,ln.p1.y-ln.p2.y)
-    })
+    // before we adjust l, this is what the inside of the cos funciton is:
+    let inside = sqrt(g/l)*t
+    l += SIZE
+    let newInside = sqrt(g/l)*t
+  
+    if (!isNaN(inside)) {
+        t = t * (inside / newInside)
+    }
+    
 }
 
-//NOT VERLET
+// NOT VERLET
+
 const SIZE = 25
-var lastChainLink = 0
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -175,35 +178,44 @@ function setup() {
   addChainLink();
   h = windowHeight;
   w = windowWidth;
-  frameRate(1);
+  frameRate(30);
 }
 
+var dir = 1
 function draw() {
     if (paused) return
+    let theta = angle * cos(sqrt(g/l)*t)
+    t += degToRad(10)
 
-    let theta = angle * cos(sqrt(g/l) * t);
     background(255);
     lp = points[points.length-1]
-    //console.log("before lp ", lp.x, lp.y, lp.ox, lp.oy)
     lp.ox = lp.x
     lp.oy = lp.y
-    lp.x = sin(theta/2) * l + points[0].x;
-    lp.y = cos(theta/2) * l + points[0].y;
-    //console.log("after lp ", lp.x, lp.y, lp.ox, lp.oy)
-        
+    let px = sin(theta) * l + points[0].x
+    let py = cos(theta) * l + points[0].y
+    lp.x = px
+    lp.y = py
+
+    // draw the pendum
+    //stroke(120, 120, 120)
+    //line(points[0].x, points[0].y, px, py)
+
     movePoints();
-    drawLines();
     for (var i = 0; i < stiffness; i++){
         constrainLines();
     }
-    t += degToRad(10);
-    //console.log("after after lp ", lp.x, lp.y, lp.ox, lp.oy)
+    drawLines()
 
+}
+
+function printLastPoint(msg) {
+    console.log(msg)
+    let lp = points[points.length - 1]
+    console.log(lp.x, lp.y)
 }
 
 function keyPressed() {
     if (key == "z") {
         addChainLink();
-        draw()
     }
 }
