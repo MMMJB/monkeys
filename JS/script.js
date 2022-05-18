@@ -4,6 +4,8 @@ const grav = 0.5
 const stiffness = 5
 const linkSize = 25
 const horizSpace = 50
+const leniency = 10;
+var monkeSprite;
 var angle = degToRad(75)
 var t = 0
 var g = 10
@@ -11,6 +13,7 @@ var chainLen = 0
 var points = []
 var lines = []
 var paused = false
+var hovering = false
 var mi = 1
 
 document.querySelector("button").addEventListener("click", function () {
@@ -90,26 +93,15 @@ function constrainLine(l){
 }
 
 function drawLine(l) {
-  stroke(l.col)
-  strokeWeight(5)
-  line(l.p1.x, l.p1.y, l.p2.x, l.p2.y)
-}
-
-function closestPoint(x,y){
-    var min = 40
-    var index = -2
-    for (var i = 0; i < points.length; i ++){
-        var p = points[i]
-        var dist = Math.hypot(p.x-x,p.y-y)
-        p.mouseDist = dist
-        if(dist < min){
-            min = dist
-            index = i
-            
-        }
-        
-    }
-    return index
+    if (hovering && l == lines[mi]) tint(255, 125.5)
+    else tint(255, 255)
+    let monkeWidth = monkeSprite.width / 10;
+    let monkeHeight = monkeSprite.height / 10;
+    push()
+    translate((l.p1.x + l.p2.x)/2, (l.p1.y + l.p2.y)/2)
+    rotate(Math.atan2(l.p2.y - l.p1.y, l.p2.x - l.p1.x) - radians(90))
+    image(monkeSprite, 0, 0, monkeWidth, monkeHeight)
+    pop()
 }
 
 function movePoints(){
@@ -200,6 +192,8 @@ function setup() {
     h = windowHeight
     w = windowWidth
     frameRate(30)
+    monkeSprite = loadImage('../egg.png');
+    imageMode(CENTER);
 }
 
 function resetGame() {
@@ -230,6 +224,9 @@ function draw() {
     }
 
     let theta = computePendulumTheta()
+    if (abs(degrees(theta)) < leniency) hovering = true;
+    else hovering = false;
+
     t += degToRad(10)
 
     background(255)
@@ -257,8 +254,8 @@ function draw() {
 function keyPressed() {
     if (key == "z") {
         let theta = computePendulumTheta()
-        if (abs(degrees(theta)) < 5) {
+        if (abs(degrees(theta)) < leniency) {
             connectLink()
-        }
+        } else resetGame();
     }
 }
