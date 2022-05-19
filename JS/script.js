@@ -95,11 +95,13 @@ function constrainLine(l){
 function drawLine(l) {
     if (hovering && l == lines[mi]) tint(255, 125.5)
     else tint(255, 255)
-    let monkeWidth = monkeSprite.width / 10;
-    let monkeHeight = monkeSprite.height / 10;
+    let monkeWidth = monkeSprite.width / 5;
+    let monkeHeight = monkeSprite.height / 5;
     push()
     translate((l.p1.x + l.p2.x)/2, (l.p1.y + l.p2.y)/2)
-    rotate(Math.atan2(l.p2.y - l.p1.y, l.p2.x - l.p1.x) - radians(90))
+    let tilt = 0;
+    if (lines.indexOf(l) <= mi - 1) tilt = 45; 
+    rotate(Math.atan2(l.p2.y - l.p1.y, l.p2.x - l.p1.x) - radians(90+tilt))
     image(monkeSprite, 0, 0, monkeWidth, monkeHeight)
     pop()
 }
